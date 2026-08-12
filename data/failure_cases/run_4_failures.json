@@ -1,0 +1,98 @@
+[
+  {
+    "task_id": "T-B03",
+    "instruction": "把绿色的PCB板放到C区",
+    "difficulty": "简单",
+    "failure_category": "执行类失败",
+    "failure_subtype": "放置失败(掉落)",
+    "failure_reason": "PCB板（放置失败(掉落)）：执行阶段抓取或放置失败"
+  },
+  {
+    "task_id": "T-B06",
+    "instruction": "把白色的连接器放到C区",
+    "difficulty": "中等",
+    "failure_category": "环境类失败",
+    "failure_subtype": "仿真物理异常",
+    "failure_reason": "连接器（仿真物理异常）：环境/物理异常导致失败"
+  },
+  {
+    "task_id": "T-C02",
+    "instruction": "把所有易碎的零件放到C区，要轻拿轻放",
+    "difficulty": "中等",
+    "failure_category": "执行类失败",
+    "failure_subtype": "放置失败(掉落)",
+    "failure_reason": "PCB板（放置失败(掉落)）：执行阶段抓取或放置失败"
+  },
+  {
+    "task_id": "T-C03",
+    "instruction": "把所有银色的零件放到A区",
+    "difficulty": "中等",
+    "failure_category": "规划类失败",
+    "failure_subtype": "路径不合理",
+    "failure_reason": "螺母（路径不合理）：分拣顺序/路径规划不当"
+  },
+  {
+    "task_id": "T-C04",
+    "instruction": "把所有金属零件放到B区，其余的放到C区",
+    "difficulty": "中等",
+    "failure_category": "执行类失败",
+    "failure_subtype": "抓取失败(滑落)",
+    "failure_reason": "螺丝（抓取失败(滑落)）：执行阶段抓取或放置失败"
+  },
+  {
+    "task_id": "T-C05",
+    "instruction": "把所有塑料零件分拣到A区",
+    "difficulty": "中等",
+    "failure_category": "环境类失败",
+    "failure_subtype": "仿真物理异常",
+    "failure_reason": "芯片（仿真物理异常）：环境/物理异常导致失败"
+  },
+  {
+    "task_id": "T-C06",
+    "instruction": "把所有易碎零件放到C区，把所有金属零件放到B区",
+    "difficulty": "困难",
+    "failure_category": "感知类失败",
+    "failure_subtype": "遮挡看不见",
+    "failure_reason": "螺丝（遮挡看不见）：感知阶段未能正确识别/定位"
+  },
+  {
+    "task_id": "T-P02",
+    "instruction": "先把易碎的显示屏放到C区，再处理其它零件",
+    "difficulty": "中等",
+    "failure_category": "执行类失败",
+    "failure_subtype": "放置失败(掉落)",
+    "failure_reason": "目标零件未全部成功分拣"
+  },
+  {
+    "task_id": "T-P03",
+    "instruction": "优先分拣PCB板到C区，然后把芯片放到A区，最后处理电阻放到B区",
+    "difficulty": "中等",
+    "failure_category": "理解类失败",
+    "failure_subtype": "漏理解约束",
+    "failure_reason": "PCB板（漏理解约束）：指令意图理解偏差导致分拣错误"
+  },
+  {
+    "task_id": "T-P05",
+    "instruction": "优先分拣大件零件到A区，然后把小件零件放到B区",
+    "difficulty": "中等",
+    "failure_category": "规划类失败",
+    "failure_subtype": "分拣顺序错误",
+    "failure_reason": "螺母（分拣顺序错误）：分拣顺序/路径规划不当"
+  },
+  {
+    "task_id": "T-A05",
+    "instruction": "把那些看起来差不多的小金属件都挑出来放到B区",
+    "difficulty": "中等",
+    "failure_category": "理解类失败",
+    "failure_subtype": "歧义处理失败",
+    "failure_reason": "电容（歧义处理失败）：指令意图理解偏差导致分拣错误"
+  },
+  {
+    "task_id": "T-A06",
+    "instruction": "场景比较乱，把所有易碎的大件优先小心搬到C区，剩下的随意分拣",
+    "difficulty": "困难",
+    "failure_category": "规划类失败",
+    "failure_subtype": "优先级处理错误",
+    "failure_reason": "螺母（优先级处理错误）：分拣顺序/路径规划不当"
+  }
+]

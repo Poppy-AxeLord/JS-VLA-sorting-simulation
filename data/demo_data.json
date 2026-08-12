@@ -1,0 +1,130 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "vla_backend": "rule_based",
+      "strategy": "baseline",
+      "world_model_on": false,
+      "base_success_rate": 0.62,
+      "note": "纯规则基线：rule_based + baseline 策略，无世界模型。"
+    },
+    {
+      "version": "v2",
+      "vla_backend": "rule_based",
+      "strategy": "optimized",
+      "world_model_on": false,
+      "base_success_rate": 0.74,
+      "note": "优化策略：置信度阈值 + 失败重试 + 异常恢复，成功率显著提升。"
+    },
+    {
+      "version": "v3",
+      "vla_backend": "rule_based",
+      "strategy": "optimized",
+      "world_model_on": true,
+      "base_success_rate": 0.83,
+      "note": "优化策略 + 世界模型：抓取前风险评估，进一步降低执行/感知失败。"
+    }
+  ],
+  "parts_catalog": [
+    {
+      "code": "screw",
+      "name": "螺丝",
+      "material": "金属",
+      "color": "银色",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 0.01
+    },
+    {
+      "code": "nut",
+      "name": "螺母",
+      "material": "金属",
+      "color": "银色",
+      "size": "小",
+      "shape": "六边形",
+      "fragile": false,
+      "weight": 0.008
+    },
+    {
+      "code": "capacitor",
+      "name": "电容",
+      "material": "金属",
+      "color": "蓝色",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 0.005
+    },
+    {
+      "code": "resistor",
+      "name": "电阻",
+      "material": "陶瓷",
+      "color": "棕色",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 0.003
+    },
+    {
+      "code": "chip",
+      "name": "芯片",
+      "material": "塑料",
+      "color": "黑色",
+      "size": "中",
+      "shape": "方形",
+      "fragile": true,
+      "weight": 0.004
+    },
+    {
+      "code": "connector",
+      "name": "连接器",
+      "material": "塑料",
+      "color": "白色",
+      "size": "中",
+      "shape": "方形",
+      "fragile": false,
+      "weight": 0.006
+    },
+    {
+      "code": "heatsink",
+      "name": "散热器",
+      "material": "金属",
+      "color": "银色",
+      "size": "大",
+      "shape": "块状",
+      "fragile": false,
+      "weight": 0.05
+    },
+    {
+      "code": "pcb",
+      "name": "PCB板",
+      "material": "复合",
+      "color": "绿色",
+      "size": "大",
+      "shape": "平板",
+      "fragile": true,
+      "weight": 0.03
+    },
+    {
+      "code": "button",
+      "name": "按键",
+      "material": "塑料",
+      "color": "红色",
+      "size": "小",
+      "shape": "方形",
+      "fragile": false,
+      "weight": 0.002
+    },
+    {
+      "code": "display",
+      "name": "显示屏",
+      "material": "玻璃",
+      "color": "黑色",
+      "size": "大",
+      "shape": "平板",
+      "fragile": true,
+      "weight": 0.04
+    }
+  ]
+}

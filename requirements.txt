@@ -1,0 +1,44 @@
+# =============================================================================
+# 工业分拣 VLA 仿真 POC —— Python 依赖清单 (requirements.txt)
+# 目标平台：Mac Studio / Apple Silicon (arm64, M 系列芯片)
+# 设计原则：只装【核心，必装】即可跑通完整演示（仿真走 Mock、VLA 走 rule_based、
+#           看板内置 3 版演示数据）。【可选，加强】缺失时全部自动优雅降级，绝不崩溃。
+#
+# 重要说明（Apple Silicon / 禁 CUDA）：
+#   - 本项目面向 Mac Apple Silicon，所有依赖均有 arm64 wheel，开箱即用。
+#   - 严禁安装任何 CUDA-only 包（如 nvidia-* / cudatoolkit / faiss-gpu 等）。
+#   - PyTorch 走官方默认 wheel 即可获得 MPS(Metal) 加速，无需也不要指定 CUDA 版本。
+#   - 安装命令参考（建议用 setup.sh 一键完成）：
+#       pip install -r requirements.txt          # 默认仅装【核心6个】（可选段已注释隔离）
+#     需要“真仿真/真模型”能力时，再手动安装可选段（缺失会自动降级，失败不影响核心演示）：
+#       pip install mujoco torch torchvision transformers opencv-python-headless
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# 【核心，必装】—— 装上这 6 个即可跑通完整演示（看板 + 评测 + 失败分析）
+# 全部为纯 Python / 有 arm64 预编译 wheel，安装快、无系统级依赖。
+# -----------------------------------------------------------------------------
+numpy>=1.26,<2.2          # 数值计算基础；Mock 物理运动学、合成俯视图均依赖它
+pandas>=2.1,<2.3          # 评测结果表格处理、分组聚合（按难度/类型）
+pyyaml>=6.0              # 读取 config/*.yaml（环境/模型/任务/指标配置）
+streamlit>=1.31,<1.40    # 评测分析看板（Web UI，默认端口 8501）
+plotly>=5.18             # 看板交互图表（趋势/饼图/雷达/合成场景图）
+matplotlib>=3.8          # Mock 相机合成俯视场景图、离线可视化
+
+
+# -----------------------------------------------------------------------------
+# 【可选，加强】—— 不装也能全演示；装上可解锁“真仿真 / 真模型”能力。
+# 任一项安装失败仅告警、不中断；运行期缺失则自动降级：
+#   mujoco 缺失      -> 物理仿真回退 MockPhysics（纯 numpy 运动学近似）
+#   torch  缺失/MPS不可用 -> 设备回退 CPU 字符串，SmolVLA 回退 rule_based
+#   transformers 缺失 -> SmolVLA 无法加载，回退 rule_based 规则基线
+#   opencv 缺失      -> 图像处理走 matplotlib/numpy 路径（不强依赖 cv2）
+# -----------------------------------------------------------------------------
+# 默认注释掉：避免 `pip install -r requirements.txt` 拉取又慢又可能失败的重依赖，
+# 与「只装核心即可全演示」原则一致。需要时去掉行首 # 或用上方手动命令安装。
+# mujoco>=3.1,<3.3               # MuJoCo 物理仿真，Apple Silicon 友好（官方 arm64 wheel）
+# torch>=2.2                     # PyTorch，Mac 上默认 wheel 即带 MPS(Metal) 加速，禁 CUDA 版
+# torchvision>=0.17             # 配合 torch 的视觉算子（SmolVLA 图像预处理）
+# transformers>=4.40            # HuggingFace Transformers，加载 SmolVLA-500M
+# opencv-python-headless>=4.9   # 无 GUI 版 OpenCV（headless，避免 Qt/GUI 依赖冲突）

@@ -1,0 +1,501 @@
+# ============================================================================
+# tasks.yaml —— 30 个评测任务（5 大类 × 6 个，覆盖 简单/中等/困难）
+# ----------------------------------------------------------------------------
+# 本文件由 src/evaluation/benchmark.py 加载，逐任务交由 SortingEngine 执行。
+# 严格对应技术契约 SPEC2 §2（10 种零件 / 三料盒）、§7（分拣引擎）、§10（配置）。
+#
+# 五大类型（type）：
+#   basic      基础分拣：单条明确规则（颜色/材质/类别 → 指定料盒）
+#   conditional 条件分拣：带条件约束（如"所有金属""易碎的""红色的"）
+#   priority   优先级分拣：先 X 后 Y 的顺序要求
+#   batch      批量分拣：全场景按某维度分类（颜色/材质/大小）
+#   anomaly    异常场景：困难/遮挡/相似物为主，触发失败注入压力测试
+#
+# 每个任务字段：
+#   id          任务唯一编号
+#   instruction 中文自然语言指令（≥20 条不同指令，覆盖各类型，含模糊指令）
+#   type        见上五类
+#   difficulty  简单 / 中等 / 困难（决定零件数与遮挡，见 env_config.yaml）
+#   scene       场景定义：part_codes（指定具体零件）或 count（按难度随机采样）
+#   expected    期望结果：assignments（零件code→料盒）或 target_parts（目标零件集合）
+#   scoring     评分模式：exact（全对才算成功）/ partial（按比例给 sort_accuracy）
+#
+# 料盒 key：A / B / C（对应 A区 / B区 / C区）
+# 合法零件 code（取自 §2，仅这 10 种）：
+#   screw 螺丝 / nut 螺母 / capacitor 电容 / resistor 电阻 / chip 芯片 /
+#   connector 连接器 / heatsink 散热器 / pcb PCB板 / button 按键 / display 显示屏
+# ============================================================================
+
+tasks:
+
+  # ==========================================================================
+  # 一、基础分拣 basic（6 个）—— 单条明确规则，颜色差异为主，难度偏简单/中等
+  # ==========================================================================
+  - id: "T-B01"
+    instruction: "把红色的按键放到A区"
+    type: "basic"
+    difficulty: "简单"
+    scene:
+      part_codes: ["button", "screw", "pcb"]   # 红色按键 + 银色螺丝 + 绿色PCB，颜色差异大
+    expected:
+      assignments:
+        button: "A"
+    scoring:
+      mode: "exact"
+
+  - id: "T-B02"
+    instruction: "把银色的螺丝放到A区"
+    type: "basic"
+    difficulty: "简单"
+    scene:
+      part_codes: ["screw", "chip", "display"]  # 银色螺丝 + 黑色芯片 + 黑色显示屏
+    expected:
+      assignments:
+        screw: "A"
+    scoring:
+      mode: "exact"
+
+  - id: "T-B03"
+    instruction: "把绿色的PCB板放到C区"
+    type: "basic"
+    difficulty: "简单"
+    scene:
+      part_codes: ["pcb", "button", "capacitor"]  # 绿色PCB + 红色按键 + 蓝色电容
+    expected:
+      assignments:
+        pcb: "C"
+    scoring:
+      mode: "exact"
+
+  - id: "T-B04"
+    instruction: "把蓝色的电容放到B区"
+    type: "basic"
+    difficulty: "中等"
+    scene:
+      part_codes: ["capacitor", "screw", "nut", "button", "pcb"]  # 含银色相似族 screw/nut
+    expected:
+      assignments:
+        capacitor: "B"
+    scoring:
+      mode: "exact"
+
+  - id: "T-B05"
+    instruction: "把芯片放到A区，把连接器放到B区"
+    type: "basic"
+    difficulty: "中等"
+    scene:
+      part_codes: ["chip", "connector", "resistor", "button", "capacitor"]
+    expected:
+      assignments:
+        chip: "A"
+        connector: "B"
+    scoring:
+      mode: "partial"
+
+  - id: "T-B06"
+    instruction: "把白色的连接器放到C区"
+    type: "basic"
+    difficulty: "中等"
+    scene:
+      part_codes: ["connector", "chip", "display", "screw", "heatsink"]
+    expected:
+      assignments:
+        connector: "C"
+    scoring:
+      mode: "exact"
+
+  # ==========================================================================
+  # 二、条件分拣 conditional（6 个）—— 带条件约束（材质/易碎/颜色集合）
+  # ==========================================================================
+  - id: "T-C01"
+    instruction: "把所有金属零件分拣到B区"
+    type: "conditional"
+    difficulty: "简单"
+    scene:
+      part_codes: ["screw", "chip", "pcb"]  # 金属:screw；非金属:chip(塑料)/pcb(复合)
+    expected:
+      assignments:
+        screw: "B"           # 金属类 → B区
+    scoring:
+      mode: "partial"
+
+  - id: "T-C02"
+    instruction: "把所有易碎的零件放到C区，要轻拿轻放"
+    type: "conditional"
+    difficulty: "中等"
+    scene:
+      part_codes: ["chip", "pcb", "display", "screw", "nut"]  # 易碎:chip/pcb/display
+    expected:
+      assignments:
+        chip: "C"
+        pcb: "C"
+        display: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-C03"
+    instruction: "把所有银色的零件放到A区"
+    type: "conditional"
+    difficulty: "中等"
+    scene:
+      part_codes: ["screw", "nut", "heatsink", "button", "capacitor"]  # 银色:screw/nut/heatsink
+    expected:
+      assignments:
+        screw: "A"
+        nut: "A"
+        heatsink: "A"
+    scoring:
+      mode: "partial"
+
+  - id: "T-C04"
+    instruction: "把所有金属零件放到B区，其余的放到C区"
+    type: "conditional"
+    difficulty: "中等"
+    scene:
+      part_codes: ["screw", "nut", "capacitor", "chip", "connector"]
+      # 金属:screw/nut/capacitor → B；非金属:chip/connector → C
+    expected:
+      assignments:
+        screw: "B"
+        nut: "B"
+        capacitor: "B"
+        chip: "C"
+        connector: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-C05"
+    instruction: "把所有塑料零件分拣到A区"
+    type: "conditional"
+    difficulty: "中等"
+    scene:
+      part_codes: ["chip", "connector", "button", "screw", "pcb"]  # 塑料:chip/connector/button
+    expected:
+      assignments:
+        chip: "A"
+        connector: "A"
+        button: "A"
+    scoring:
+      mode: "partial"
+
+  - id: "T-C06"
+    instruction: "把所有易碎零件放到C区，把所有金属零件放到B区"
+    type: "conditional"
+    difficulty: "困难"
+    scene:
+      part_codes: ["display", "pcb", "chip", "screw", "nut", "heatsink", "capacitor", "connector"]
+      # 易碎:display/pcb/chip → C；金属:screw/nut/heatsink/capacitor → B；connector(塑料非易碎)留场
+    expected:
+      assignments:
+        display: "C"
+        pcb: "C"
+        chip: "C"
+        screw: "B"
+        nut: "B"
+        heatsink: "B"
+        capacitor: "B"
+    scoring:
+      mode: "partial"
+
+  # ==========================================================================
+  # 三、优先级分拣 priority（6 个）—— 先 X 后 Y 的顺序要求
+  # ==========================================================================
+  - id: "T-P01"
+    instruction: "优先分拣芯片，然后是电容，都放到A区"
+    type: "priority"
+    difficulty: "简单"
+    scene:
+      part_codes: ["chip", "capacitor", "screw"]
+    expected:
+      assignments:
+        chip: "A"
+        capacitor: "A"
+    scoring:
+      mode: "partial"
+
+  - id: "T-P02"
+    instruction: "先把易碎的显示屏放到C区，再处理其它零件"
+    type: "priority"
+    difficulty: "中等"
+    scene:
+      part_codes: ["display", "screw", "nut", "button", "connector"]
+    expected:
+      assignments:
+        display: "C"
+    scoring:
+      mode: "exact"
+
+  - id: "T-P03"
+    instruction: "优先分拣PCB板到C区，然后把芯片放到A区，最后处理电阻放到B区"
+    type: "priority"
+    difficulty: "中等"
+    scene:
+      part_codes: ["pcb", "chip", "resistor", "screw", "nut"]
+    expected:
+      assignments:
+        pcb: "C"
+        chip: "A"
+        resistor: "B"
+    scoring:
+      mode: "partial"
+
+  - id: "T-P04"
+    instruction: "按易碎优先的原则分拣：先放易碎件到C区，金属件随后放B区"
+    type: "priority"
+    difficulty: "困难"
+    scene:
+      part_codes: ["display", "pcb", "chip", "screw", "nut", "heatsink", "capacitor", "button"]
+      # 易碎优先:display/pcb/chip → C；金属:screw/nut/heatsink/capacitor → B
+    expected:
+      assignments:
+        display: "C"
+        pcb: "C"
+        chip: "C"
+        screw: "B"
+        nut: "B"
+        heatsink: "B"
+        capacitor: "B"
+    scoring:
+      mode: "partial"
+
+  - id: "T-P05"
+    instruction: "优先分拣大件零件到A区，然后把小件零件放到B区"
+    type: "priority"
+    difficulty: "中等"
+    scene:
+      part_codes: ["heatsink", "pcb", "screw", "nut", "button"]
+      # 大件:heatsink/pcb → A；小件:screw/nut/button → B
+    expected:
+      assignments:
+        heatsink: "A"
+        pcb: "A"
+        screw: "B"
+        nut: "B"
+        button: "B"
+    scoring:
+      mode: "partial"
+
+  - id: "T-P06"
+    instruction: "优先分拣芯片到A区，其次电容到B区，再次电阻到C区"
+    type: "priority"
+    difficulty: "困难"
+    scene:
+      part_codes: ["chip", "capacitor", "resistor", "screw", "nut", "connector", "button", "pcb"]
+    expected:
+      assignments:
+        chip: "A"
+        capacitor: "B"
+        resistor: "C"
+    scoring:
+      mode: "partial"
+
+  # ==========================================================================
+  # 四、批量分拣 batch（6 个）—— 全场景按某维度（颜色/材质/大小）整体分类
+  # ==========================================================================
+  - id: "T-Z01"
+    instruction: "把所有零件按颜色分类，银色放A区，蓝色放B区，绿色放C区"
+    type: "batch"
+    difficulty: "简单"
+    scene:
+      part_codes: ["screw", "capacitor", "pcb"]  # 银/蓝/绿 各一
+    expected:
+      assignments:
+        screw: "A"
+        capacitor: "B"
+        pcb: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-Z02"
+    instruction: "把所有零件按材质分类，金属放A区，塑料放B区，其它放C区"
+    type: "batch"
+    difficulty: "中等"
+    scene:
+      part_codes: ["screw", "nut", "chip", "connector", "pcb"]
+      # 金属:screw/nut → A；塑料:chip/connector → B；其它(复合 pcb) → C
+    expected:
+      assignments:
+        screw: "A"
+        nut: "A"
+        chip: "B"
+        connector: "B"
+        pcb: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-Z03"
+    instruction: "把所有零件按大小分类，大件放A区，中件放B区，小件放C区"
+    type: "batch"
+    difficulty: "中等"
+    scene:
+      part_codes: ["heatsink", "chip", "screw", "button", "connector"]
+      # 大:heatsink → A；中:chip/connector → B；小:screw/button → C
+    expected:
+      assignments:
+        heatsink: "A"
+        chip: "B"
+        connector: "B"
+        screw: "C"
+        button: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-Z04"
+    instruction: "把所有零件按颜色分类整理，银色系归A区，黑色系归B区，其余归C区"
+    type: "batch"
+    difficulty: "困难"
+    scene:
+      part_codes: ["screw", "nut", "heatsink", "chip", "display", "pcb", "button", "capacitor"]
+      # 银色:screw/nut/heatsink → A；黑色:chip/display → B；其余:pcb(绿)/button(红)/capacitor(蓝) → C
+    expected:
+      assignments:
+        screw: "A"
+        nut: "A"
+        heatsink: "A"
+        chip: "B"
+        display: "B"
+        pcb: "C"
+        button: "C"
+        capacitor: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-Z05"
+    instruction: "把所有零件按是否易碎分类，易碎的放C区，结实的放A区"
+    type: "batch"
+    difficulty: "中等"
+    scene:
+      part_codes: ["chip", "display", "screw", "nut", "connector"]
+      # 易碎:chip/display → C；结实:screw/nut/connector → A
+    expected:
+      assignments:
+        chip: "C"
+        display: "C"
+        screw: "A"
+        nut: "A"
+        connector: "A"
+    scoring:
+      mode: "partial"
+
+  - id: "T-Z06"
+    instruction: "把所有零件按材质分类整理，金属归B区，塑料归A区，玻璃和复合材料归C区"
+    type: "batch"
+    difficulty: "困难"
+    scene:
+      part_codes: ["screw", "nut", "heatsink", "capacitor", "chip", "connector", "display", "pcb"]
+      # 金属:screw/nut/heatsink/capacitor → B；塑料:chip/connector → A；玻璃display+复合pcb → C
+    expected:
+      assignments:
+        screw: "B"
+        nut: "B"
+        heatsink: "B"
+        capacitor: "B"
+        chip: "A"
+        connector: "A"
+        display: "C"
+        pcb: "C"
+    scoring:
+      mode: "partial"
+
+  # ==========================================================================
+  # 五、异常场景 anomaly（6 个）—— 困难/遮挡/相似物/模糊指令，压力测试失败注入
+  # 含 §10 要求的模糊指令"大的放左边，小的放右边"（A区在左，C区在右）。
+  # ==========================================================================
+  - id: "T-A01"
+    instruction: "把大的零件放左边，小的零件放右边"
+    type: "anomaly"
+    difficulty: "中等"
+    scene:
+      part_codes: ["heatsink", "pcb", "screw", "nut", "button"]
+      # 模糊指令：左=A区，右=C区。大件:heatsink/pcb → A(左)；小件:screw/nut/button → C(右)
+    expected:
+      assignments:
+        heatsink: "A"
+        pcb: "A"
+        screw: "C"
+        nut: "C"
+        button: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-A02"
+    instruction: "把大的放左边，小的放右边，中等大小的放中间"
+    type: "anomaly"
+    difficulty: "困难"
+    scene:
+      part_codes: ["heatsink", "display", "pcb", "chip", "connector", "screw", "nut", "button"]
+      # 左=A 大件:heatsink/display/pcb；中间=B 中件:chip/connector；右=C 小件:screw/nut/button
+    expected:
+      assignments:
+        heatsink: "A"
+        display: "A"
+        pcb: "A"
+        chip: "B"
+        connector: "B"
+        screw: "C"
+        nut: "C"
+        button: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-A03"
+    instruction: "在遮挡的情况下，找出所有银色螺丝和螺母放到A区"
+    type: "anomaly"
+    difficulty: "困难"
+    scene:
+      part_codes: ["screw", "nut", "heatsink", "capacitor", "chip", "connector", "button", "pcb"]
+      # 银色相似族 screw/nut 易识别错；困难含遮挡，感知失败率高
+    expected:
+      target_parts: ["screw", "nut"]
+      assignments:
+        screw: "A"
+        nut: "A"
+    scoring:
+      mode: "partial"
+
+  - id: "T-A04"
+    instruction: "把贵重的易碎件小心地单独放到C区，别和金属件混在一起"
+    type: "anomaly"
+    difficulty: "困难"
+    scene:
+      part_codes: ["display", "pcb", "chip", "screw", "nut", "heatsink", "capacitor", "resistor"]
+      # 易碎件 display/pcb/chip → C；模糊语义（"贵重的"）+ 易碎大件抬高放置失败率
+    expected:
+      target_parts: ["display", "pcb", "chip"]
+      assignments:
+        display: "C"
+        pcb: "C"
+        chip: "C"
+    scoring:
+      mode: "partial"
+
+  - id: "T-A05"
+    instruction: "把那些看起来差不多的小金属件都挑出来放到B区"
+    type: "anomaly"
+    difficulty: "中等"
+    scene:
+      part_codes: ["screw", "nut", "capacitor", "resistor", "button"]
+      # 模糊+相似物：小金属件 screw/nut/capacitor（电容金属小件）；resistor 陶瓷干扰
+    expected:
+      target_parts: ["screw", "nut", "capacitor"]
+      assignments:
+        screw: "B"
+        nut: "B"
+        capacitor: "B"
+    scoring:
+      mode: "partial"
+
+  - id: "T-A06"
+    instruction: "场景比较乱，把所有易碎的大件优先小心搬到C区，剩下的随意分拣"
+    type: "anomaly"
+    difficulty: "困难"
+    scene:
+      part_codes: ["display", "pcb", "chip", "heatsink", "screw", "nut", "connector", "button"]
+      # 易碎大件 display/pcb → C（优先）；含遮挡 + 多零件 → 规划/执行失败压力最大
+    expected:
+      target_parts: ["display", "pcb"]
+      assignments:
+        display: "C"
+        pcb: "C"
+    scoring:
+      mode: "partial"

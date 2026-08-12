@@ -1,0 +1,140 @@
+{
+  "description": "10 种 3C 零件权威目录的 JSON 镜像（与 src/simulation/objects.py 的 PARTS 保持一致，请勿手改字段名）",
+  "fields": [
+    "code",
+    "name",
+    "material",
+    "color",
+    "color_hex",
+    "size",
+    "shape",
+    "fragile",
+    "weight"
+  ],
+  "bins": [
+    {
+      "key": "A",
+      "name": "A区"
+    },
+    {
+      "key": "B",
+      "name": "B区"
+    },
+    {
+      "key": "C",
+      "name": "C区"
+    }
+  ],
+  "parts": [
+    {
+      "code": "screw",
+      "name": "螺丝",
+      "material": "金属",
+      "color": "银色",
+      "color_hex": "#C0C0C0",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 2.0
+    },
+    {
+      "code": "nut",
+      "name": "螺母",
+      "material": "金属",
+      "color": "银色",
+      "color_hex": "#A8A8A8",
+      "size": "小",
+      "shape": "六边形",
+      "fragile": false,
+      "weight": 1.5
+    },
+    {
+      "code": "capacitor",
+      "name": "电容",
+      "material": "金属",
+      "color": "蓝色",
+      "color_hex": "#2D6CDF",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 1.0
+    },
+    {
+      "code": "resistor",
+      "name": "电阻",
+      "material": "陶瓷",
+      "color": "棕色",
+      "color_hex": "#8B5A2B",
+      "size": "小",
+      "shape": "圆柱",
+      "fragile": false,
+      "weight": 0.5
+    },
+    {
+      "code": "chip",
+      "name": "芯片",
+      "material": "塑料",
+      "color": "黑色",
+      "color_hex": "#2B2B2B",
+      "size": "中",
+      "shape": "方形",
+      "fragile": true,
+      "weight": 3.0
+    },
+    {
+      "code": "connector",
+      "name": "连接器",
+      "material": "塑料",
+      "color": "白色",
+      "color_hex": "#F0F0F0",
+      "size": "中",
+      "shape": "方形",
+      "fragile": false,
+      "weight": 4.0
+    },
+    {
+      "code": "heatsink",
+      "name": "散热器",
+      "material": "金属",
+      "color": "银色",
+      "color_hex": "#9FA6AD",
+      "size": "大",
+      "shape": "块状",
+      "fragile": false,
+      "weight": 25.0
+    },
+    {
+      "code": "pcb",
+      "name": "PCB板",
+      "material": "复合",
+      "color": "绿色",
+      "color_hex": "#2E8B57",
+      "size": "大",
+      "shape": "平板",
+      "fragile": true,
+      "weight": 15.0
+    },
+    {
+      "code": "button",
+      "name": "按键",
+      "material": "塑料",
+      "color": "红色",
+      "color_hex": "#E8453C",
+      "size": "小",
+      "shape": "方形",
+      "fragile": false,
+      "weight": 0.8
+    },
+    {
+      "code": "display",
+      "name": "显示屏",
+      "material": "玻璃",
+      "color": "黑色",
+      "color_hex": "#1A1A1A",
+      "size": "大",
+      "shape": "平板",
+      "fragile": true,
+      "weight": 30.0
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "difficulty": "中等",
+  "seed": 42,
+  "occlusion": false,
+  "bins": {
+    "A": {
+      "key": "A",
+      "name": "A区",
+      "pos": [
+        -0.28,
+        -0.34
+      ],
+      "color_hex": "#2563EB"
+    },
+    "B": {
+      "key": "B",
+      "name": "B区",
+      "pos": [
+        0.0,
+        -0.34
+      ],
+      "color_hex": "#5AD8A6"
+    },
+    "C": {
+      "key": "C",
+      "name": "C区",
+      "pos": [
+        0.28,
+        -0.34
+      ],
+      "color_hex": "#F6BD16"
+    }
+  },
+  "parts": [
+    {
+      "part_id": 0,
+      "code": "screw",
+      "pos": [
+        0.106,
+        0.1769
+      ],
+      "occluded": false
+    },
+    {
+      "part_id": 1,
+      "code": "nut",
+      "pos": [
+        -0.2478,
+        -0.0112
+      ],
+      "occluded": false
+    },
+    {
+      "part_id": 2,
+      "code": "pcb",
+      "pos": [
+        -0.2821,
+        -0.0925
+      ],
+      "occluded": false
+    },
+    {
+      "part_id": 3,
+      "code": "chip",
+      "pos": [
+        0.0032,
+        -0.1694
+      ],
+      "occluded": false
+    },
+    {
+      "part_id": 4,
+      "code": "display",
+      "pos": [
+        -0.1807,
+        0.08
+      ],
+      "occluded": false
+    }
+  ],
+  "_note": "预置示例场景（由 generate_scene(\"中等\", seed=42) 生成，结构与 objects.generate_scene 一致）"
+}

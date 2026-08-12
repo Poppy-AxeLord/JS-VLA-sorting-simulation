@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  工业分拣 VLA 仿真 POC —— MuJoCo 3.x 场景（MJCF）
+  ================================================
+  本文件为一个“可被 mujoco.MjModel.from_xml_path 加载”的合法 MJCF。它刻意
+  保持简化（POC 取舍）：地板 + 工作台 + A/B/C 三个料盒 + 一个 2-3 自由度的
+  简化机械臂（hinge 关节）+ 二指夹爪。
+
+  说明：
+  - 本项目的运动学执行实际走 src/simulation/robot.py 的 MockPhysics 近似；
+    本 XML 主要用于：env.py 探测 mujoco 是否可用并“加载成功即走 mujoco 后端
+    做离屏渲染”。即使 XML 不够精细，也不会阻断流程——加载失败 env 会自动
+    回退 Mock。
+  - 坐标系（米）与 objects.py / env_config.yaml 大致对齐：工作台中心在原点，
+    料盒在前方（-y 方向）一字排开：A 区在左(-x)、B 区居中、C 区在右(+x)。
+  - 颜色 rgba 与零件/料盒配色呼应，便于离屏渲染出可读画面。
+-->
+<mujoco model="industrial_sorting_poc">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"/>
+
+  <visual>
+    <global offwidth="640" offheight="480"/>
+    <quality shadowsize="2048"/>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.6 0.6 0.6" specular="0.1 0.1 0.1"/>
+  </visual>
+
+  <default>
+    <!-- 默认几何体属性：适度摩擦，便于“抓取”示意。 -->
+    <geom friction="1.0 0.05 0.001" density="800"/>
+    <joint damping="1.0"/>
+    <default class="arm_link">
+      <geom type="capsule" rgba="0.25 0.40 0.85 1"/>
+    </default>
+    <default class="gripper">
+      <geom type="box" rgba="0.20 0.20 0.22 1"/>
+    </default>
+  </default>
+
+  <asset>
+    <!-- 棋盘纹理地板，便于离屏渲染时有空间参照。 -->
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.9 0.9 0.9"
+             rgb2="0.78 0.80 0.84" width="300" height="300"/>
+    <material name="grid_mat" texture="grid" texrepeat="8 8" reflectance="0.1"/>
+    <material name="table_mat" rgba="0.95 0.96 0.97 1"/>
+    <material name="binA_mat" rgba="0.145 0.388 0.922 1"/> <!-- A 区 #2563EB -->
+    <material name="binB_mat" rgba="0.353 0.847 0.651 1"/> <!-- B 区 #5AD8A6 -->
+    <material name="binC_mat" rgba="0.965 0.741 0.086 1"/> <!-- C 区 #F6BD16 -->
+  </asset>
+
+  <worldbody>
+    <!-- 全局光源 -->
+    <light name="top_light" pos="0 0 2.0" dir="0 0 -1" diffuse="0.7 0.7 0.7"/>
+    <light name="side_light" pos="0.8 -0.8 1.2" dir="-0.6 0.6 -0.8"
+           diffuse="0.4 0.4 0.4"/>
+
+    <!-- 地板 -->
+    <geom name="floor" type="plane" size="3 3 0.1" material="grid_mat"
+          pos="0 0 0"/>
+
+    <!-- 工作台（一块抬高的平板，零件散落其上） -->
+    <body name="table" pos="0 0 0.40">
+      <geom name="table_top" type="box" size="0.45 0.35 0.02"
+            material="table_mat"/>
+      <!-- 四条桌腿（示意） -->
+      <geom name="leg1" type="box" size="0.02 0.02 0.20" pos="0.40 0.30 -0.22"
+            rgba="0.6 0.62 0.65 1"/>
+      <geom name="leg2" type="box" size="0.02 0.02 0.20" pos="-0.40 0.30 -0.22"
+            rgba="0.6 0.62 0.65 1"/>
+      <geom name="leg3" type="box" size="0.02 0.02 0.20" pos="0.40 -0.30 -0.22"
+            rgba="0.6 0.62 0.65 1"/>
+      <geom name="leg4" type="box" size="0.02 0.02 0.20" pos="-0.40 -0.30 -0.22"
+            rgba="0.6 0.62 0.65 1"/>
+    </body>
+
+    <!-- 三个分拣料盒（A 左 / B 中 / C 右），在工作台前方（-y）一字排开。
+         用一个底板 + 四壁的开口盒子近似。这里简化为“底板 + 描边”示意。 -->
+    <body name="bin_A" pos="-0.28 -0.34 0.42">
+      <geom name="binA_floor" type="box" size="0.09 0.07 0.005"
+            material="binA_mat"/>
+      <geom name="binA_w1" type="box" size="0.09 0.005 0.03" pos="0 0.065 0.03"
+            material="binA_mat"/>
+      <geom name="binA_w2" type="box" size="0.09 0.005 0.03" pos="0 -0.065 0.03"
+            material="binA_mat"/>
+      <geom name="binA_w3" type="box" size="0.005 0.07 0.03" pos="0.085 0 0.03"
+            material="binA_mat"/>
+      <geom name="binA_w4" type="box" size="0.005 0.07 0.03" pos="-0.085 0 0.03"
+            material="binA_mat"/>
+    </body>
+    <body name="bin_B" pos="0.0 -0.34 0.42">
+      <geom name="binB_floor" type="box" size="0.09 0.07 0.005"
+            material="binB_mat"/>
+      <geom name="binB_w1" type="box" size="0.09 0.005 0.03" pos="0 0.065 0.03"
+            material="binB_mat"/>
+      <geom name="binB_w2" type="box" size="0.09 0.005 0.03" pos="0 -0.065 0.03"
+            material="binB_mat"/>
+      <geom name="binB_w3" type="box" size="0.005 0.07 0.03" pos="0.085 0 0.03"
+            material="binB_mat"/>
+      <geom name="binB_w4" type="box" size="0.005 0.07 0.03" pos="-0.085 0 0.03"
+            material="binB_mat"/>
+    </body>
+    <body name="bin_C" pos="0.28 -0.34 0.42">
+      <geom name="binC_floor" type="box" size="0.09 0.07 0.005"
+            material="binC_mat"/>
+      <geom name="binC_w1" type="box" size="0.09 0.005 0.03" pos="0 0.065 0.03"
+            material="binC_mat"/>
+      <geom name="binC_w2" type="box" size="0.09 0.005 0.03" pos="0 -0.065 0.03"
+            material="binC_mat"/>
+      <geom name="binC_w3" type="box" size="0.005 0.07 0.03" pos="0.085 0 0.03"
+            material="binC_mat"/>
+      <geom name="binC_w4" type="box" size="0.005 0.07 0.03" pos="-0.085 0 0.03"
+            material="binC_mat"/>
+    </body>
+
+    <!-- 简化机械臂（UR5e 近似）：基座固定在工作台后方（-y），3 个 hinge 关节
+         构成肩/肘/腕的平面臂，末端挂二指夹爪。关节命名便于日后接执行器。 -->
+    <body name="arm_base" pos="0.0 -0.50 0.42">
+      <geom name="base_geom" type="cylinder" size="0.05 0.03"
+            rgba="0.35 0.38 0.42 1"/>
+      <!-- 关节1：肩部（绕 z 转，水平摆动） -->
+      <body name="link1" pos="0 0 0.03">
+        <joint name="shoulder_pan" type="hinge" axis="0 0 1"
+               range="-3.14159 3.14159"/>
+        <geom class="arm_link" name="link1_geom" fromto="0 0 0 0 0 0.12"
+              size="0.025"/>
+        <!-- 关节2：大臂抬升（绕 x 转） -->
+        <body name="link2" pos="0 0 0.12">
+          <joint name="shoulder_lift" type="hinge" axis="1 0 0"
+                 range="-2.0 2.0"/>
+          <geom class="arm_link" name="link2_geom" fromto="0 0 0 0 0.28 0"
+                size="0.022"/>
+          <!-- 关节3：小臂（绕 x 转） -->
+          <body name="link3" pos="0 0.28 0">
+            <joint name="elbow" type="hinge" axis="1 0 0" range="-2.6 2.6"/>
+            <geom class="arm_link" name="link3_geom" fromto="0 0 0 0 0.26 0"
+                  size="0.020"/>
+            <!-- 腕部 + 二指夹爪 -->
+            <body name="wrist" pos="0 0.26 0">
+              <geom name="wrist_geom" type="cylinder" size="0.02 0.015"
+                    quat="0.707 0.707 0 0" rgba="0.30 0.33 0.37 1"/>
+              <!-- 左指：可沿 y 平移开合 -->
+              <body name="finger_left" pos="-0.03 0.02 0">
+                <joint name="gripper_left" type="slide" axis="1 0 0"
+                       range="-0.03 0.0"/>
+                <geom class="gripper" name="finger_left_geom"
+                      size="0.006 0.006 0.025"/>
+              </body>
+              <!-- 右指：与左指对称开合 -->
+              <body name="finger_right" pos="0.03 0.02 0">
+                <joint name="gripper_right" type="slide" axis="1 0 0"
+                       range="0.0 0.03"/>
+                <geom class="gripper" name="finger_right_geom"
+                      size="0.006 0.006 0.025"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- 离屏渲染相机：俯视（top）与侧视（side），供 env 的 MuJoCo 离屏渲染。 -->
+    <camera name="top" pos="0 -0.10 1.30" euler="0 0 0"/>
+    <camera name="side" pos="0.0 -1.10 0.85" xyaxes="1 0 0 0 0.5 0.9"/>
+  </worldbody>
+
+  <!-- 执行器：为每个关节配位置伺服，便于日后用关节角驱动（POC 中可不消费）。 -->
+  <actuator>
+    <position name="act_shoulder_pan" joint="shoulder_pan" kp="50"/>
+    <position name="act_shoulder_lift" joint="shoulder_lift" kp="50"/>
+    <position name="act_elbow" joint="elbow" kp="50"/>
+    <position name="act_gripper_left" joint="gripper_left" kp="20"/>
+    <position name="act_gripper_right" joint="gripper_right" kp="20"/>
+  </actuator>
+</mujoco>

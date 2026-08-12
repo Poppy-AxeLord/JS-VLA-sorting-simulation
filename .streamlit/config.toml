@@ -1,0 +1,15 @@
+# -----------------------------------------------------------------------------
+# Streamlit 主题（统一设计规范 v1）
+# 作用：把 Streamlit 默认的红色强调（radio 选中 / 焦点 / spinner 等）统一为主蓝，
+#       侧边栏与控件底色统一为浅灰分割色，正文色对齐设计规范。
+# 注意：需从项目根目录 `streamlit run src/dashboard/app.py` 启动才会读取本文件。
+# -----------------------------------------------------------------------------
+[theme]
+primaryColor = "#2563EB"            # 主色：radio/selectbox 焦点、滑块、链接
+backgroundColor = "#FFFFFF"          # 主内容区底色
+secondaryBackgroundColor = "#F6F7F9" # 侧边栏 / 输入控件底色
+textColor = "#1F2937"                # 正文色
+font = "sans serif"                  # 系统无衬线栈（Retina 天然清晰，不引外部字体）
+
+[browser]
+gatherUsageStats = false

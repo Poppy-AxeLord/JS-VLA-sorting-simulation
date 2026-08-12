@@ -1,0 +1,92 @@
+# ============================================================================
+# model_config.yaml —— VLA 模型与推理配置
+# ----------------------------------------------------------------------------
+# 本文件由 src/vla/__init__.py(get_vla) 与各后端、src/utils/mps_utils.py 读取。
+# 严格对应技术契约 SPEC2 §5（VLA 接口）与 §10（配置文件）。
+#
+# 【最重要的容错原则】默认后端 rule_based（纯规则、零重依赖、永远可运行）。
+#   - smolvla：torch+transformers 缺失或加载失败 → 自动回退 rule_based
+#   - vlm_rule：VLM 不可用 / 无 key → 自动回退 rule_based
+#   - device：torch 不可用 → 返回 'cpu'，绝不崩溃
+# 只装核心依赖（numpy/pandas/pyyaml/streamlit/plotly/matplotlib）即可跑通全流程。
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# VLA 总配置
+# ----------------------------------------------------------------------------
+vla:
+  # 默认后端：rule_based —— 无任何重依赖，作为永远可用的基线
+  # 可选：rule_based | vlm_rule | smolvla
+  backend: "rule_based"
+
+  # 置信度阈值：action.confidence 低于此值 → 触发二次确认 / 跳过 / 人工介入
+  # （计入 human_intervention_rate，见 strategies.py）
+  confidence_threshold: 0.55
+
+  # 单个零件抓放的最大重试次数（每次微调姿态，计入 retry_count）
+  max_retry: 3
+
+# ----------------------------------------------------------------------------
+# SmolVLA 配置（可选高级后端，torch + transformers + MPS）
+# 加载/推理任一失败 → 记录原因并回退 rule_based。以下字段仅在可用时生效。
+# ----------------------------------------------------------------------------
+smolvla:
+  # HuggingFace 模型 id（SmolVLA-500M）
+  model_id: "lerobot/smolvla_base"
+  # 备用/参考模型 id（轻量视觉语言）
+  fallback_model_id: "HuggingFaceTB/SmolVLM-500M-Instruct"
+
+  # 量化：在 Apple Silicon 上降低显存/内存占用
+  #   none：不量化（默认，MPS 上最稳）；8bit / 4bit：需 bitsandbytes（多为 CUDA-only，
+  #   arm64 多不支持，故默认 none，量化仅作配置占位与说明）
+  quantization: "none"         # 可选：none | 8bit | 4bit
+  load_in_8bit: false          # 8bit 量化开关（占位，缺包自动忽略）
+  load_in_4bit: false          # 4bit 量化开关（占位）
+
+  # HuggingFace 镜像：国内网络下加速模型下载（设置 HF_ENDPOINT 环境变量）
+  hf_mirror: "https://hf-mirror.com"
+  hf_endpoint_env: "HF_ENDPOINT"   # mps_utils/smolvla 会据此设置环境变量
+
+  # 类级模型缓存：避免重复加载（见 smolvla.py 的类级缓存）
+  cache_model: true
+  # 本地模型缓存目录（相对项目根 / 或 HF 默认缓存）
+  cache_dir: "data/hf_cache"
+
+  # 推理参数
+  max_new_tokens: 256
+  temperature: 0.2
+  dtype: "float16"             # MPS 上推荐 float16；不可用回退 float32
+
+# ----------------------------------------------------------------------------
+# VLM 配置（vlm_rule 后端使用：VLM 做指令解析/感知增强，失败回退规则）
+# 支持 OpenAI 兼容接口或 Qwen-VL；无 key 即纯规则运行。
+# 真实 key 请通过环境变量注入，勿硬编码进仓库。
+# ----------------------------------------------------------------------------
+vlm:
+  enabled: false               # 默认关闭；置 true 且有 key 时才走 VLM
+  provider: "openai"           # 可选：openai | qwen | none
+  # OpenAI 兼容配置
+  openai:
+    base_url: "https://api.openai.com/v1"
+    model: "gpt-4o-mini"
+    api_key: ""                # 占位；建议用环境变量 OPENAI_API_KEY 覆盖
+    api_key_env: "OPENAI_API_KEY"
+  # Qwen-VL（DashScope 兼容）配置
+  qwen:
+    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: "qwen-vl-plus"
+    api_key: ""                # 占位；建议用环境变量 DASHSCOPE_API_KEY 覆盖
+    api_key_env: "DASHSCOPE_API_KEY"
+  # 调用参数
+  timeout: 20                  # 请求超时（秒），超时即回退规则
+  max_retries: 2               # VLM 网络重试次数
+  temperature: 0.1
+
+# ----------------------------------------------------------------------------
+# 计算设备：auto（自动探测）/ mps（Apple GPU）/ cpu
+# mps_utils.get_device()：torch 可用且 mps 可用 → 'mps'，否则 'cpu'；torch 缺失 → 'cpu'
+# ----------------------------------------------------------------------------
+device:
+  prefer: "auto"               # auto | mps | cpu
+  allow_cpu_fallback: true     # MPS 不可用时允许回退 CPU（务必 true）
+  # 提示：本项目面向 Apple Silicon，禁止 CUDA-only 包；无 'cuda' 选项
