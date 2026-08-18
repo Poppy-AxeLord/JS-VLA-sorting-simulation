@@ -22,6 +22,12 @@ streamlit run src/dashboard/app.py                            # 首次自动造 
 
 > **关键词（Keywords）**：VLA（Vision-Language-Action）· 具身智能 / Embodied AI · 机器人分拣 / Robotic Sorting · MuJoCo 仿真 / Simulation · 世界模型 / World Model · Apple Silicon MPS · 评测体系 / Benchmark & Evaluation · 失败归因 / Failure Attribution · 数据驱动优化 / Data-driven Optimization · 产品思维 / Product Thinking · Python · Streamlit · Plotly · SQLite · PyTorch · SmolVLA。
 
+### 单任务执行回放
+
+下面的 GIF 基于 `SortingEngine.run_task(seed=42)` 的真实执行步骤生成，展示感知、抓取、成功/失败、重试与分拣进度。
+
+![工业分拣执行回放](assets/visuals/sorting-execution-replay.gif)
+
 ---
 
 ## 目录
