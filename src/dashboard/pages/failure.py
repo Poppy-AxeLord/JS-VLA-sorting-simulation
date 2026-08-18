@@ -132,7 +132,7 @@ def render(storage, ctx: dict) -> None:
         if cats:
             fig = charts.pie_chart(cats, vals, title="按失败大类占比", color_map=charts.FAILURE_COLORS)
             with st.container(border=True):  # 白卡容器：图表浮于浅灰页面
-                st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+                st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
         else:
             st.success("该运行没有失败任务，无需归因。")
 
@@ -145,7 +145,7 @@ def render(storage, ctx: dict) -> None:
             colors = [charts.FAILURE_COLORS.get(t["category"], charts.PRIMARY) for t in top10]
             fig = charts.horizontal_bar_chart(labels, counts, title="出现次数最多的失败子类", colors=colors)
             with st.container(border=True):
-                st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+                st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
                 st.caption("颜色对应所属大类；排在前面的子类是优先攻坚对象。")
         else:
             st.info("无失败子类数据。")
@@ -205,7 +205,7 @@ def _render_failure_trend(storage, runs: list[dict]) -> None:
 
     fig = charts.stacked_area_chart(x_labels, series, title="各类失败次数随版本变化")
     with st.container(border=True):
-        st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+        st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
 
 
 # ============================================================
@@ -317,7 +317,7 @@ def _render_case_explorer(storage, run_id: Any, rows: list[dict], dist: dict[str
         scene = _parse_scene(case)
         fig = charts.synthetic_scene_figure(scene, title="俯视布局（红框=遮挡件）")
         with st.container(border=True):
-            st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
             st.caption("方块=零件（颜色对应材质色），右侧 A/B/C 为分拣料盒；遮挡件以红色描边标注。")
 
     # 全部案例的紧凑表格，便于横向扫读
@@ -335,7 +335,7 @@ def _render_case_explorer(storage, run_id: Any, rows: list[dict], dist: dict[str
         # column_config 控宽：长文本列（指令/失败原因）给足宽度，短列收紧，窄屏不挤压
         st.dataframe(
             table_rows,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             column_config={
                 "任务ID": st.column_config.TextColumn("任务ID", width="small"),

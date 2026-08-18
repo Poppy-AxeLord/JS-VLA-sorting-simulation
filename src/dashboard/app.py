@@ -72,7 +72,8 @@ st.markdown(
         border-bottom: 1px solid #F3F4F6;
       }}
       /* 超宽屏收敛内容宽度，保证阅读节奏；窄屏不受影响 */
-      .block-container {{ padding-top: 1.6rem; padding-bottom: 2rem; max-width: 1480px; }}
+      /* Streamlit 顶栏为固定定位；留出安全区，避免首页标题被顶栏裁掉。 */
+      .block-container {{ padding-top: 4rem; padding-bottom: 2rem; max-width: 1480px; }}
       /* 顶部主标题强调条 */
       .app-title {{
         font-size: 1.5rem; font-weight: 700; color: {charts.PRIMARY_DARK};
@@ -115,6 +116,9 @@ st.markdown(
         background: #0F172A;
         border-right: 1px solid rgba(148,163,184,.12);
       }}
+      /* pages/ 目录仅用于源码组织，不能把 Streamlit 的英文文件名导航暴露给演示观众。
+         产品导航由下方「页面导航」单选框统一承担。 */
+      [data-testid="stSidebarNav"] {{ display: none; }}
       section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
       section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h1,
       section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h2,
@@ -148,6 +152,23 @@ st.markdown(
         color: #E2E8F0;
       }}
       section[data-testid="stSidebar"] div[data-baseweb="select"] svg {{ fill: #94A3B8; }}
+
+      /* 手机端：Streamlit 的列默认会保留桌面分栏，数据看板会被压成无法阅读的窄条。
+         这里统一改为单列堆叠，并收紧留白和表格/图表容器。 */
+      @media (max-width: 700px) {{
+        .block-container {{ padding: 3.5rem 0.85rem 1.5rem !important; max-width: 100% !important; }}
+        .app-title {{ font-size: 1.22rem; padding-left: 9px; line-height: 1.35; }}
+        .app-subtitle {{ font-size: .78rem; line-height: 1.55; }}
+        div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important; gap: .75rem !important; }}
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+          flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important;
+        }}
+        div[data-testid="stMetric"] {{ padding: 13px 15px; }}
+        div[data-testid="stMetricValue"] {{ font-size: 1.5rem; }}
+        div[data-testid="stVerticalBlockBorderWrapper"] {{ border-radius: 10px !important; }}
+        [data-testid="stDataFrame"] {{ overflow-x: auto; }}
+        section[data-testid="stSidebar"] {{ min-width: min(82vw, 300px) !important; }}
+      }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -157,7 +178,7 @@ st.markdown(
 # ============================================================
 # 3. storage 初始化（首次自动 seed_demo），带缓存
 # ============================================================
-@st.cache_resource(show_spinner="正在初始化数据库并加载演示数据……")
+@st.cache_resource(show_spinner="正在初始化数据库并加载任务数据……")
 def _bootstrap_storage():
     """
     初始化 storage：建表 + 首次播种演示数据。
@@ -257,6 +278,11 @@ def main() -> None:
             unsafe_allow_html=True,
         )
     with head_right:
+        st.image(
+            os.path.join(_PROJECT_ROOT, "assets", "visuals", "sorting-hero.png"),
+            caption="工业分拣工作站 · 多模态感知与动作规划",
+            width="stretch",
+        )
         _render_env_badges(current_run)
     st.divider()
 
@@ -306,7 +332,7 @@ def _render_env_badges(current_run: dict | None) -> None:
     except Exception:
         device = "cpu"
 
-    sim_text = "仿真：Mock（无 MuJoCo）" if sim_is_mock else "仿真：MuJoCo"
+    sim_text = "仿真：轻量引擎" if sim_is_mock else "仿真：MuJoCo"
     sim_color = charts.PRIORITY_COLORS["中"] if sim_is_mock else charts.POSITIVE
     dev_text = f"设备：{device.upper()}"
     dev_color = charts.POSITIVE if device == "mps" else charts.TEXT_MUTED
@@ -323,8 +349,8 @@ def _render_env_badges(current_run: dict | None) -> None:
     )
 
 
-# streamlit run 以「脚本」方式执行本文件，__name__ 即为 '__main__'，走下面分支即可；
-# 不要加 else 兜底调用 main()，否则一旦本模块被 import（非 streamlit 上下文）会立即
-# 执行 st.set_page_config/st.sidebar 等而报错或产生副作用。
-if __name__ == "__main__":
-    main()
+# 当前 Streamlit 运行器会使用内部模块名执行脚本；仅以 ``__main__`` 作为守卫会让
+# 8501 页面只剩源码目录的自动导航、主体完全空白。app.py 是唯一入口，项目内没有
+# 任何页面反向 import 它，因此这里显式执行，确保 ``streamlit run app.py`` 和
+# Streamlit 的 AppTest 都稳定渲染同一套首访内容。
+main()

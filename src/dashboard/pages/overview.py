@@ -98,7 +98,9 @@ def render(storage, ctx: dict) -> None:
     st.markdown("#### 核心指标")
     _render_metric_cards(current_run, rows, runs)
 
-    st.markdown("")  # 间隔
+    st.markdown("")
+    _render_decision_brief(current_run, rows, runs)
+    st.markdown("")
 
     # ---------- 2) & 3) 分组表现对比（双列）----------
     col_left, col_right = st.columns(2)
@@ -118,7 +120,7 @@ def render(storage, ctx: dict) -> None:
                 y_title="百分比",
             )
             with st.container(border=True):  # 白卡容器：图表浮于浅灰页面
-                st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+                st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
                 st.caption("越难的场景（遮挡 / 相似件增多）成功率越低，是优化的主战场。")
         else:
             st.info("无难度分组数据。")
@@ -137,7 +139,7 @@ def render(storage, ctx: dict) -> None:
                 is_percent=True,
             )
             with st.container(border=True):
-                st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+                st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
                 st.caption("模糊 / 批量 / 异常类指令通常更难，反映理解与规划能力短板。")
         else:
             st.info("无指令类型分组数据。")
@@ -240,6 +242,27 @@ def _render_metric_cards(run: dict, rows: list[dict], runs: list[dict] | None = 
         )
 
 
+def _render_decision_brief(run: dict, rows: list[dict], runs: list[dict]) -> None:
+    """把评测数字翻译成一段可用于答辩的结论，而非再堆一张图。"""
+    success_rate = float(run.get("success_rate") or 0)
+    accuracy = float(run.get("sort_accuracy") or 0)
+    prev = _find_previous_run(run, runs)
+    delta = (success_rate - float(prev.get("success_rate") or 0)) * 100 if prev else 0.0
+    hard = [r for r in rows if r.get("difficulty") == "困难"]
+    hard_rate = (sum(1 for r in hard if r.get("success")) / len(hard) * 100) if hard else 0.0
+    version = run.get("version", "当前版本")
+    st.markdown("#### 评测决策速览")
+    st.markdown(
+        f'''<div style="display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:1px;overflow:hidden;border:1px solid #E5E7EB;border-radius:14px;background:#E5E7EB;box-shadow:0 8px 24px rgba(16,24,40,.06);margin:4px 0 10px;">
+          <div style="padding:17px 20px;background:linear-gradient(135deg,#10244A,#2563EB);color:#fff;min-height:94px;"><div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:#A8D2FF;">EVALUATION BRIEF</div><div style="margin-top:5px;font-size:18px;font-weight:700;">{version} 版本结论</div><div style="margin-top:5px;font-size:12px;color:rgba(255,255,255,.75);">把指标、难场景和下一步验证压缩为一段可汇报的判断。</div></div>
+          <div style="padding:17px 20px;background:#fff;min-height:94px;"><div style="font-size:12px;color:#667085;">相对上一版本</div><div style="margin:5px 0;font-size:22px;font-weight:750;color:#2563EB;">{delta:+.1f} pct</div><div style="font-size:11px;color:#77849A;">成功率变化，当前为 {success_rate*100:.1f}%</div></div>
+          <div style="padding:17px 20px;background:#fff;min-height:94px;"><div style="font-size:12px;color:#667085;">难场景通过率</div><div style="margin:5px 0;font-size:22px;font-weight:750;color:#D97706;">{hard_rate:.1f}%</div><div style="font-size:11px;color:#77849A;">遮挡、相似件与异常恢复仍是主要压力测试。</div></div>
+          <div style="padding:17px 20px;background:#fff;min-height:94px;"><div style="font-size:12px;color:#667085;">下一轮验证</div><div style="margin:5px 0;font-size:18px;font-weight:750;color:#0F9D72;">风险预判</div><div style="font-size:11px;color:#77849A;">以准确率 {accuracy*100:.1f}% 为基线，验证世界模型是否降低执行失败。</div></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+
 def _render_trend(runs: list[dict]) -> None:
     """
     历史趋势折线：横轴为各版本（按时间正序），纵轴为成功率 / 准确率。
@@ -272,7 +295,7 @@ def _render_trend(runs: list[dict]) -> None:
         is_percent=True,
     )
     with st.container(border=True):
-        st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+        st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
 
         # 简短的趋势文字结论（产品视角）
         if len(success_series) >= 2:

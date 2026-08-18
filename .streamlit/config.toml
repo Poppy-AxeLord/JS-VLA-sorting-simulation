@@ -13,3 +13,7 @@ font = "sans serif"                  # 系统无衬线栈（Retina 天然清晰�
 
 [browser]
 gatherUsageStats = false
+
+[client]
+# pages/ 子目录是 dashboard 的内部模块，不作为面向访客的多页面入口。
+showSidebarNavigation = false

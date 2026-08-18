@@ -14,6 +14,9 @@ src/dashboard/charts.py —— 看板可复用 Plotly 图表构造器
 
 from __future__ import annotations
 
+import base64
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import plotly.graph_objects as go
@@ -65,6 +68,16 @@ FONT_FAMILY = '-apple-system, "SF Pro", "PingFang SC", "Helvetica Neue", "Micros
 
 #: st.plotly_chart 统一渲染配置：隐藏英文 modebar（悬停工具条），演示更干净
 PLOTLY_CONFIG: dict[str, Any] = {"displayModeBar": False}
+
+
+@lru_cache(maxsize=1)
+def _sorting_workcell_background() -> str | None:
+    """Return the local workcell render as a data URI for Plotly overlays."""
+    asset = Path(__file__).resolve().parents[2] / "assets" / "visuals" / "sorting-hero.png"
+    if not asset.is_file():
+        return None
+    encoded = base64.b64encode(asset.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
 
 
 def _base_layout(**overrides: Any) -> dict[str, Any]:
@@ -584,6 +597,23 @@ def synthetic_scene_figure(scene: dict[str, Any] | None, *, title: str = "合成
     bins = scene.get("bins", {}) or {}
 
     fig = go.Figure()
+    background = _sorting_workcell_background()
+    if background:
+        # Keep the precise diagnostic overlay while grounding it in a real workcell.
+        fig.add_layout_image(
+            dict(
+                source=background,
+                xref="x",
+                yref="y",
+                x=0,
+                y=1,
+                sizex=1,
+                sizey=1,
+                sizing="stretch",
+                opacity=0.24,
+                layer="below",
+            )
+        )
 
     # —— 1) 画三个料盒区域（俯视图右侧三条竖向条带 A/B/C）——
     #    布局产品决策：工作台主体在左 2/3，料盒在右 1/3，贴近真实分拣线俯视。

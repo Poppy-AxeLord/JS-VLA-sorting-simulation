@@ -292,7 +292,7 @@ def _render_radar(ordered_runs: list[dict], targets: dict[str, float]) -> None:
 
     fig = charts.radar_chart(dims, series, title="各版本六维能力对比")
     with st.container(border=True):  # 白卡容器：图表浮于浅灰页面
-        st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+        st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
 
 
 def _render_deltas(ordered_runs: list[dict]) -> None:
@@ -335,13 +335,38 @@ def _render_deltas(ordered_runs: list[dict]) -> None:
         metric_names.append(spec["label"])
         deltas.append(signed)
 
+    # 图表前先给出可供面试现场直接讲解的决策摘要：不是把分析结果
+    # 留给阅读者自行解码，而是明确交代本轮收益、残余风险和验证动作。
+    best_idx = max(range(len(deltas)), key=lambda i: deltas[i])
+    risk_idx = min(range(len(deltas)), key=lambda i: deltas[i])
+    best_delta = deltas[best_idx] * 100
+    risk_delta = deltas[risk_idx] * 100
+    risk_text = (
+        f"{metric_names[risk_idx]}仍退化 {abs(risk_delta):.1f}pct"
+        if risk_delta < 0
+        else "核心指标均未退化"
+    )
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:10px;margin:10px 0 16px;padding:14px 16px;border:1px solid #dbe7f5;border-radius:14px;background:linear-gradient(100deg,#f7fbff,#ffffff);">
+          <div><div style="font-size:12px;color:#5b6b81">本轮迭代结论</div>
+          <div style="font-size:16px;font-weight:700;color:#17315f">{labels[base_idx]} → {labels[target_idx]}</div></div>
+          <div><div style="font-size:12px;color:#5b6b81">最大收益</div>
+          <div style="font-size:15px;font-weight:700;color:#16856b">{metric_names[best_idx]} {best_delta:+.1f}pct</div></div>
+          <div><div style="font-size:12px;color:#5b6b81">下一轮关注</div>
+          <div style="font-size:15px;font-weight:700;color:#b45309">{risk_text}</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     fig = charts.delta_bar_chart(
         metric_names, deltas,
         title=f"{labels[base_idx]} → {labels[target_idx]} 各指标变化（绿=改善 / 红=退化）",
         is_percent=True,
     )
     with st.container(border=True):
-        st.plotly_chart(fig, use_container_width=True, config=charts.PLOTLY_CONFIG)
+        st.plotly_chart(fig, width="stretch", config=charts.PLOTLY_CONFIG)
         st.caption("对「误拣率 / 人工介入率」这类越小越好的指标，已将符号对齐为「正=改善」。")
 
     # 一句话结论：涨用成功绿、跌用危险红，语义色直接传达「变好 / 变差」

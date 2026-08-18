@@ -291,7 +291,9 @@ def list_runs() -> List[Dict[str, Any]]:
     conn = get_conn()
     try:
         rows = conn.execute(
-            "SELECT * FROM benchmark_runs ORDER BY id ASC"
+            # 看板侧边栏默认展示“最近一次运行”，因此存储层统一按最新优先返回；
+            # 版本对比页会在自身语境中显式反转为 v1 → v2 → v3 的时间正序。
+            "SELECT * FROM benchmark_runs ORDER BY id DESC"
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
     finally:
